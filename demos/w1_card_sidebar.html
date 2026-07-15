@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>方案1 · 简洁数据卡片风</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#fafaf8; --card:#ffffff; --line:#e8e6df; --text:#1f2420; --sub:#767b74;
+    --teal:#0f766e; --tealbg:#e6f3f1; --amber:#b45309; --amberbg:#fdf1e2; --red:#b3261e;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; padding:28px 32px;}
+  h1{font-family:Georgia,'Times New Roman',serif; font-size:22px; font-weight:600; margin:0;}
+  .topbar{display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:22px; border-bottom:1px solid var(--line); padding-bottom:16px;}
+  .topbar .sub{font-size:13px; color:var(--sub); margin-top:4px;}
+  .status{font-size:12px; color:var(--sub); display:flex; gap:10px; align-items:center;}
+  .dot{width:7px; height:7px; border-radius:50%; background:var(--teal); display:inline-block;}
+  .layout{display:grid; grid-template-columns:1fr 300px; gap:20px;}
+  .kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:18px;}
+  .kpi{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px;}
+  .kpi .label{font-size:12px; color:var(--sub); margin-bottom:8px;}
+  .kpi .value{font-size:24px; font-weight:600; font-family:Georgia,serif;}
+  .kpi .delta{font-size:12px; margin-top:6px;}
+  .up{color:var(--teal);} .down{color:var(--red);}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:18px 20px; margin-bottom:18px;}
+  .card h3{margin:0 0 14px; font-size:14px; font-weight:600; display:flex; justify-content:space-between; align-items:center;}
+  .tag{font-size:11px; color:var(--sub); font-weight:400; background:#f2f1eb; padding:3px 8px; border-radius:5px;}
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  th{text-align:left; color:var(--sub); font-weight:500; font-size:12px; padding:6px 8px; border-bottom:1px solid var(--line);}
+  td{padding:8px; border-bottom:1px solid #f1efe8;}
+  .side .card{padding:16px;}
+  .ai-card{border-color:var(--teal); background:var(--tealbg);}
+  .ai-card h3{color:var(--teal);}
+  .ai-text{font-size:13px; line-height:1.7; margin-bottom:10px;}
+  .ai-src{font-size:11px; color:var(--sub); background:#fff; display:inline-block; padding:3px 8px; border-radius:5px; margin-bottom:8px;}
+  button{background:#fff; border:1px solid var(--line); color:var(--text); font-size:12px; padding:6px 12px; border-radius:6px; cursor:pointer;}
+  button.primary{background:var(--teal); color:#fff; border:none;}
+  .rt-item{display:flex; justify-content:space-between; font-size:13px; padding:7px 0; border-bottom:1px solid #f1efe8;}
+  canvas{max-height:200px;}
+  .footer-note{font-size:11px; color:var(--sub); margin-top:6px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <h1>万相台投放看板</h1>
+    <div class="sub">历史数据(T1)· 实时监控 · AI策略</div>
+  </div>
+  <div class="status"><span class="dot"></span><span id="conn-badge">检测中</span> · <span id="time-badge">--:--</span></div>
+</div>
+
+<div class="layout">
+  <div class="main">
+    <div class="kpis">
+      <div class="kpi"><div class="label">总花费(T1)</div><div class="value" id="k1">--</div><div class="delta up" id="d1">--</div></div>
+      <div class="kpi"><div class="label">总成交金额</div><div class="value" id="k2">--</div><div class="delta up" id="d2">--</div></div>
+      <div class="kpi"><div class="label">ROI</div><div class="value" id="k3">--</div><div class="delta down" id="d3">--</div></div>
+      <div class="kpi"><div class="label">点击率 CTR</div><div class="value" id="k4">--</div><div class="delta up" id="d4">--</div></div>
+    </div>
+
+    <div class="card">
+      <h3>花费 / 成交趋势(近7天) <span class="tag">历史数据 T1</span></h3>
+      <canvas id="trendChart"></canvas>
+    </div>
+
+    <div class="card">
+      <h3>品类表现 <span class="tag">按 品类+场景 聚合</span></h3>
+      <table>
+        <tr><th>品类</th><th>场景</th><th>花费</th><th>成交金额</th><th>ROI</th></tr>
+        <tbody id="cat-table"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="side">
+    <div class="card">
+      <h3>实时监控 <span class="tag">后端转发</span></h3>
+      <div id="rt-list"></div>
+    </div>
+
+    <div class="card ai-card">
+      <h3>AI 策略建议</h3>
+      <div class="ai-src" id="ai-src">检索规则库/案例库中...</div>
+      <div class="ai-text" id="ai-text">加载中...</div>
+      <div style="display:flex; gap:8px;">
+        <button onclick="alert('展开命中的规则/案例原文')">查看依据</button>
+        <button class="primary" onclick="alert('采纳建议')">采纳</button>
+      </div>
+      <div class="footer-note">结论仅基于检索到的规则/案例,无匹配时会明确提示</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const CONFIG = { BACKEND_URL:'', POLL_INTERVAL_MS:5000 };
+
+const categories = ['女装','美妆','家居','数码','食品'];
+const scenarios = ['人群推广','关键词推广','货品全站推广'];
+
+function nowStr(){ return new Date().toLocaleTimeString('zh-CN'); }
+
+function renderCatTable(){
+  const rows = categories.map(c=>{
+    const scene = scenarios[Math.floor(Math.random()*scenarios.length)];
+    const cost = (2000+Math.random()*8000);
+    const sales = cost*(1.5+Math.random()*2.5);
+    return `<tr><td>${c}</td><td>${scene}</td><td>¥${cost.toFixed(0)}</td><td>¥${sales.toFixed(0)}</td><td>${(sales/cost).toFixed(2)}</td></tr>`;
+  }).join('');
+  document.getElementById('cat-table').innerHTML = rows;
+}
+renderCatTable();
+
+const trend = new Chart(document.getElementById('trendChart'), {
+  type:'line',
+  data:{ labels:['D-6','D-5','D-4','D-3','D-2','D-1','T1'], datasets:[
+    { label:'花费', data:[4200,4600,4300,5100,4800,5300,5600], borderColor:'#0f766e', backgroundColor:'rgba(15,118,110,.08)', tension:.35, fill:true },
+    { label:'成交金额', data:[9800,10200,9600,11800,10900,12500,13100], borderColor:'#b45309', backgroundColor:'transparent', tension:.35 }
+  ]},
+  options:{ plugins:{legend:{position:'bottom', labels:{boxWidth:10, font:{size:11}}}}, scales:{ y:{ticks:{color:'#767b74'}, grid:{color:'#f1efe8'}}, x:{ticks:{color:'#767b74'}, grid:{display:false}}}}
+});
+
+function renderRealtime(){
+  const items = categories.slice(0,4).map(c=>{
+    const v = (200+Math.random()*800).toFixed(0);
+    const up = Math.random()>0.4;
+    return `<div class="rt-item"><span>${c} 实时花费</span><span style="color:${up?'#0f766e':'#b3261e'}">${up?'▲':'▼'} ¥${v}</span></div>`;
+  }).join('');
+  document.getElementById('rt-list').innerHTML = items;
+}
+
+function mockAI(){
+  const opts=[
+    {src:'规则库 R-014 · 案例库 C-092', text:'「女装」品类今日花费同比T1增长明显但ROI下降,建议收紧关键词推广出价,预计ROI可回升至2.1以上。'},
+    {src:'规则库 R-007', text:'「数码」品类各项指标平稳,暂无需调整,继续观察。'},
+    {src:'案例库 C-045(相似度0.88)', text:'当前波动与历史案例C-045相似,建议对货品全站推广场景加大预算测试。'}
+  ];
+  return opts[Math.floor(Math.random()*opts.length)];
+}
+
+async function tick(){
+  document.getElementById('time-badge').textContent = nowStr();
+  document.getElementById('conn-badge').textContent = CONFIG.BACKEND_URL ? '已连接后端' : '演示模式(未连后端)';
+  document.getElementById('k1').textContent = '¥' + (5600+Math.random()*400).toFixed(0);
+  document.getElementById('d1').textContent = '较昨日 +6.2%';
+  document.getElementById('k2').textContent = '¥' + (13100+Math.random()*900).toFixed(0);
+  document.getElementById('d2').textContent = '较昨日 +8.1%';
+  document.getElementById('k3').textContent = (2.1+Math.random()*0.4).toFixed(2);
+  document.getElementById('d3').textContent = '较昨日 -0.3%';
+  document.getElementById('k4').textContent = (3.2+Math.random()*0.6).toFixed(1)+'%';
+  document.getElementById('d4').textContent = '较昨日 +0.4%';
+  renderRealtime();
+  const a = mockAI();
+  document.getElementById('ai-src').textContent = a.src;
+  document.getElementById('ai-text').textContent = a.text;
+}
+tick(); setInterval(tick, CONFIG.POLL_INTERVAL_MS);
+</script>
+</body>
+</html>

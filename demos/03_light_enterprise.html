@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>方案3 · 浅色企业风格</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root{ --bg:#f5f6f8; --panel:#ffffff; --line:#e4e7eb; --text:#1c2333; --sub:#6b7280; --blue:#2563eb; --green:#16a34a; --amber:#d97706; }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--text); font-family:-apple-system,'Segoe UI',sans-serif; padding:28px;}
+  .topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;}
+  .title{font-size:19px; font-weight:600;}
+  .badges{display:flex; gap:8px; font-size:12px;}
+  .badge{padding:5px 12px; border-radius:20px; background:#eef2ff; color:var(--blue);}
+  .kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:16px;}
+  .kpi{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px;}
+  .kpi .label{font-size:12px; color:var(--sub); margin-bottom:6px;}
+  .kpi .value{font-size:26px; font-weight:600;}
+  .grid{display:grid; grid-template-columns:1.4fr 1fr; gap:14px; margin-bottom:14px;}
+  .panel{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:18px;}
+  .panel h3{margin:0 0 14px; font-size:14px; font-weight:600; display:flex; justify-content:space-between;}
+  .tag{font-size:11px; color:var(--sub); font-weight:400;}
+  .ai-panel{border-left:3px solid var(--blue);}
+  .ai-text{font-size:14px; line-height:1.7; margin-bottom:12px;}
+  .ai-src{font-size:12px; color:var(--sub); background:#f8f9fb; display:inline-block; padding:3px 10px; border-radius:6px; margin-bottom:10px;}
+  button{background:#fff; border:1px solid var(--line); color:var(--text); font-size:13px; padding:7px 14px; border-radius:6px; cursor:pointer;}
+  button.primary{background:var(--blue); color:#fff; border:none;}
+  canvas{max-height:220px;}
+  .footer-note{font-size:12px; color:var(--sub); margin-top:20px; border-top:1px dashed var(--line); padding-top:10px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="title">外场台监控看板</div>
+  <div class="badges">
+    <span class="badge" id="conn-badge">检测连接中</span>
+    <span class="badge" style="background:#f1f5f9; color:var(--sub)" id="time-badge">--:--:--</span>
+  </div>
+</div>
+
+<div class="kpis">
+  <div class="kpi"><div class="label">实时吞吐量</div><div class="value" id="k1">--</div></div>
+  <div class="kpi"><div class="label">异常率</div><div class="value" id="k2" style="color:var(--amber)">--</div></div>
+  <div class="kpi"><div class="label">较昨日同期</div><div class="value" id="k3" style="color:var(--green)">--</div></div>
+  <div class="kpi"><div class="label">在线设备</div><div class="value" id="k4">--</div></div>
+</div>
+
+<div class="grid">
+  <div class="panel">
+    <h3>实时数据流 <span class="tag">API 直连</span></h3>
+    <canvas id="rt"></canvas>
+  </div>
+  <div class="panel">
+    <h3>历史数据 T1 <span class="tag">数据库</span></h3>
+    <canvas id="hist"></canvas>
+  </div>
+</div>
+
+<div class="panel ai-panel">
+  <h3>AI 策略建议 <span class="tag">规则库 + 案例库</span></h3>
+  <div class="ai-src" id="ai-src">检索中...</div>
+  <div class="ai-text" id="ai-text">加载中...</div>
+  <div style="display:flex; gap:8px;">
+    <button onclick="alert('查看依据')">查看依据</button>
+    <button class="primary" onclick="alert('采纳')">采纳建议</button>
+  </div>
+</div>
+
+<div class="footer-note">接入真实API:修改下方CONFIG中的URL与密钥。当前为模拟数据演示。</div>
+
+<script>
+const CONFIG = { REALTIME_API_URL:'', REALTIME_API_KEY:'', HISTORICAL_API_URL:'', AI_STRATEGY_API_URL:'', POLL_INTERVAL_MS:5000 };
+
+function nowStr(){ return new Date().toLocaleTimeString('zh-CN'); }
+let series = Array.from({length:12}, ()=>1000+Math.random()*400);
+function mockTick(){ series.shift(); series.push(1000+Math.random()*500); return series.slice(); }
+
+const rt = new Chart(document.getElementById('rt'), {
+  type:'line',
+  data:{ labels:Array(12).fill(''), datasets:[{ data:series, borderColor:'#2563eb', backgroundColor:'rgba(37,99,235,.08)', tension:.35, fill:true, pointRadius:0 }]},
+  options:{ animation:false, plugins:{legend:{display:false}}, scales:{x:{display:false}, y:{ticks:{color:'#6b7280'}, grid:{color:'#eef1f5'}}}}
+});
+const hist = new Chart(document.getElementById('hist'), {
+  type:'bar',
+  data:{ labels:['周一','周二','周三','周四','周五','周六','周日'], datasets:[{ data:[820,910,875,990,860,940,905], backgroundColor:'#94a3b8'}]},
+  options:{ plugins:{legend:{display:false}}, scales:{x:{ticks:{color:'#6b7280'}, grid:{display:false}}, y:{ticks:{color:'#6b7280'}, grid:{color:'#eef1f5'}}}}
+});
+
+function mockAI(){
+  const opts=[
+    {src:'命中规则库 R-014、案例库 C-092', text:'当前异常率高于历史同期均值 1.8 个标准差,建议启动预案 B(负载均衡切换),预计可将异常率降至 1.1% 以下。'},
+    {src:'命中规则库 R-007', text:'实时吞吐量趋势平稳,暂无需人工介入,系统将持续监控。'},
+    {src:'命中案例库 C-045', text:'检测到与历史相似场景(2024-11 波动),建议提前预热备用节点。'}
+  ];
+  return opts[Math.floor(Math.random()*opts.length)];
+}
+
+async function tick(){
+  document.getElementById('time-badge').textContent = nowStr();
+  document.getElementById('conn-badge').textContent = CONFIG.REALTIME_API_URL ? '● 实时连接' : '○ 演示模式';
+  series = mockTick();
+  rt.data.datasets[0].data = series; rt.update();
+  const last = series[series.length-1];
+  document.getElementById('k1').textContent = Math.round(last).toLocaleString();
+  document.getElementById('k2').textContent = (2+Math.random()*1.5).toFixed(1)+'%';
+  const diff=(Math.random()*10-2).toFixed(1);
+  document.getElementById('k3').textContent=(diff>0?'+':'')+diff+'%';
+  document.getElementById('k4').textContent=(46+Math.round(Math.random()*3))+'/50';
+  const a = mockAI();
+  document.getElementById('ai-src').textContent = a.src;
+  document.getElementById('ai-text').textContent = a.text;
+}
+tick(); setInterval(tick, CONFIG.POLL_INTERVAL_MS);
+</script>
+</body>
+</html>

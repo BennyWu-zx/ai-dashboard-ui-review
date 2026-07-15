@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>万相台看板 · UI Demo 预览</title>
+<style>
+  :root{ --bg:#fafaf8; --card:#fff; --line:#e8e6df; --text:#1f2420; --sub:#767b74; --accent:#0f766e; }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--text); font-family:-apple-system,'Segoe UI',sans-serif; padding:40px 24px;}
+  .wrap{max-width:820px; margin:0 auto;}
+  h1{font-size:22px; margin:0 0 6px;}
+  p.sub{color:var(--sub); font-size:14px; margin:0 0 32px;}
+  .grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(280px,1fr)); gap:18px;}
+  a.card{display:block; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:20px; text-decoration:none; color:var(--text); transition:border-color .15s;}
+  a.card:hover{border-color:var(--accent);}
+  a.card .name{font-size:16px; font-weight:600; margin-bottom:6px;}
+  a.card .desc{font-size:13px; color:var(--sub); line-height:1.6;}
+  a.card .open{font-size:12px; color:var(--accent); margin-top:12px; display:inline-block;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>万相台看板 · UI Demo 预览</h1>
+  <p class="sub">点击卡片直接在浏览器中打开对应的静态演示页面</p>
+  <div class="grid">
+    <a class="card" href="demos/03_light_enterprise.html">
+      <div class="name">浅色企业风</div>
+      <div class="desc">干净简约的浅色企业SaaS风格,适合日常办公/汇报展示场景。</div>
+      <span class="open">打开预览 →</span>
+    </a>
+    <a class="card" href="demos/w1_card_sidebar.html">
+      <div class="name">简洁数据卡片 + 侧栏</div>
+      <div class="desc">主内容区放趋势图/品类表,右侧固定栏展示实时监控和AI策略建议。</div>
+      <span class="open">打开预览 →</span>
+    </a>
+  </div>
+</div>
+</body>
+</html>
